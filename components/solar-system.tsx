@@ -4,10 +4,23 @@ import { useRef } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls, Text } from "@react-three/drei"
 import { Suspense } from "react"
+import { Mesh, Group, Vector3 } from "three"
 
-function Planet({ position, size, color, speed, orbitRadius, name, textColor = "#ffffff" }) {
-  const ref = useRef()
-  const orbitRef = useRef()
+type Position = [number, number, number]
+
+interface PlanetProps {
+  position: Position
+  size: number
+  color: string
+  speed: number
+  orbitRadius: number
+  name?: string
+  textColor?: string
+}
+
+function Planet({ position = [0, 0, 0] as Position, size, color, speed, orbitRadius, name, textColor = "#ffffff" }: PlanetProps) {
+  const ref = useRef<Mesh>(null)
+  const orbitRef = useRef<Mesh>(null)
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime() * speed
@@ -54,7 +67,7 @@ function Planet({ position, size, color, speed, orbitRadius, name, textColor = "
 }
 
 function Sun() {
-  const sunRef = useRef()
+  const sunRef = useRef<Mesh>(null)
 
   useFrame(() => {
     if (sunRef.current) {
