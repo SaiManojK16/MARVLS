@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, BookOpen, CuboidIcon as Cube, Microscope, Smartphone, Star, Wrench } from "lucide-react"
@@ -5,8 +7,36 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import AtomModel from "@/components/atom-model"
 import DNAModel from "@/components/dna-model"
+import { useEffect, useState } from "react"
+import { Canvas } from "@react-three/fiber"
+import { OrbitControls, PerspectiveCamera } from "@react-three/drei"
+import { toast } from "sonner"
 
 export default function Home() {
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    const handleContextLost = (event: Event) => {
+      event.preventDefault()
+      setHasError(true)
+      toast.error("3D rendering error. Please refresh the page.")
+    }
+
+    window.addEventListener('webglcontextlost', handleContextLost)
+    return () => window.removeEventListener('webglcontextlost', handleContextLost)
+  }, [])
+
+  if (hasError) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-4xl font-bold mb-4">Welcome to MARVLS</h1>
+        <p className="text-xl text-muted-foreground">
+          Creating tools that turn flat content into immersive experiences.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section with 3D Atom Model */}
@@ -50,7 +80,13 @@ export default function Home() {
               </div>
             </div>
             <div className="relative h-[400px] md:h-[500px] w-full rounded-lg overflow-hidden animate-fade-in-right">
-              <AtomModel />
+              <Canvas>
+                <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+                <OrbitControls enableZoom={false} />
+                <ambientLight intensity={0.5} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <AtomModel />
+              </Canvas>
             </div>
           </div>
         </div>
@@ -163,7 +199,13 @@ export default function Home() {
               </Button>
             </div>
             <div className="h-[500px] rounded-lg overflow-hidden shadow-xl animate-fade-in-right">
-              <DNAModel />
+              <Canvas>
+                <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+                <OrbitControls enableZoom={false} />
+                <ambientLight intensity={0.5} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <DNAModel />
+              </Canvas>
             </div>
           </div>
         </div>
