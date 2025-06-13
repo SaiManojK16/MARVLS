@@ -33,10 +33,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       const userData = await authAPI.getMe()
       setUser(userData)
     } catch (error) {
+      console.error('Auth check error:', error)
       setUser(null)
+      localStorage.removeItem('token')
     } finally {
       setLoading(false)
     }
@@ -45,8 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authAPI.login({ email, password })
+      if (response.token) {
+        localStorage.setItem('token', response.token)
+      }
       setUser(response)
     } catch (error) {
+      console.error('Login error:', error)
       throw error
     }
   }
@@ -55,15 +68,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authAPI.logout()
       setUser(null)
+      localStorage.removeItem('token')
     } catch (error) {
+      console.error('Logout error:', error)
       throw error
     }
   }
 
   const register = async (userData: { name: string; email: string; password: string; userType: string }) => {
     try {
-      await authAPI.register(userData)
+      const response = await authAPI.register(userData)
+      if (response.token) {
+        localStorage.setItem('token', response.token)
+      }
     } catch (error) {
+      console.error('Registration error:', error)
       throw error
     }
   }
