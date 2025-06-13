@@ -169,23 +169,26 @@ exports.getMe = async (req, res) => {
 
 // @desc    Logout user
 // @route   POST /api/auth/logout
-// @access  Private
+// @access  Public
 exports.logout = async (req, res) => {
   try {
-    res.cookie('token', '', {
+    // Clear the token cookie
+    res.cookie('token', 'none', {
+      expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
-      expires: new Date(0),
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
     });
 
     res.status(200).json({
       success: true,
-      message: 'Logged out successfully',
+      message: 'User logged out successfully'
     });
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error logging out',
+      message: error.message || 'Error logging out'
     });
   }
 }; 

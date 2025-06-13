@@ -46,14 +46,11 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5001/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      setUser(null);
-      window.location.href = '/login';
+      await authAPI.logout()
+      setUser(null)
+      window.location.href = '/login'
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Logout error:', error)
     }
   }
 

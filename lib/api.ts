@@ -18,7 +18,6 @@ export const authAPI = {
         throw new Error(data.message || 'Registration failed');
       }
       
-      // Return the user data from the response
       return data.data;
     } catch (error) {
       console.error('Registration error:', error);
@@ -65,6 +64,25 @@ export const authAPI = {
       throw error;
     }
   },
+
+  logout: async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Logout failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  }
 };
 
 // Contact API calls
