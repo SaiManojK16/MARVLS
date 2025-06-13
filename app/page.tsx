@@ -3,13 +3,13 @@ import Image from "next/image"
 import { ArrowRight, BookOpen, CuboidIcon as Cube, Microscope, Smartphone, Star, Wrench } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import ARModelViewer from "@/components/ar-model-viewer"
-import SolarSystem from "@/components/solar-system"
+import AtomModel from "@/components/atom-model"
+import DNAModel from "@/components/dna-model"
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Section with 3D AR Model */}
+      {/* Hero Section with 3D Atom Model */}
       <section className="relative py-20 md:py-28 overflow-hidden bg-primary">
         <div className="absolute inset-0 w-full h-full opacity-20">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.1)_0,transparent_70%)]"></div>
@@ -50,7 +50,7 @@ export default function Home() {
               </div>
             </div>
             <div className="relative h-[400px] md:h-[500px] w-full rounded-lg overflow-hidden animate-fade-in-right">
-              <ARModelViewer />
+              <AtomModel />
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="h-[500px] rounded-lg overflow-hidden shadow-xl animate-fade-in-right">
-              <SolarSystem />
+              <DNAModel />
             </div>
           </div>
         </div>
