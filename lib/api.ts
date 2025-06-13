@@ -1,5 +1,14 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': token ? `Bearer ${token}` : '',
+  };
+};
+
 // Auth API calls
 export const authAPI = {
   register: async (userData: { name: string; email: string; password: string; userType: string }) => {
@@ -16,6 +25,11 @@ export const authAPI = {
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
+      }
+      
+      // Store the token in localStorage
+      if (data.data.token) {
+        localStorage.setItem('token', data.data.token);
       }
       
       return data.data;
@@ -55,11 +69,8 @@ export const authAPI = {
 
   getMe: async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       
@@ -81,12 +92,9 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
       
@@ -110,13 +118,9 @@ export const authAPI = {
 export const contactAPI = {
   submitContact: async (contactData: { name: string; email: string; subject: string; message: string }) => {
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/contact`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify(contactData),
       });
