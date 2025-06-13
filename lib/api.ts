@@ -40,6 +40,12 @@ export const authAPI = {
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
+
+      // Store the token in localStorage
+      if (data.data.token) {
+        localStorage.setItem('token', data.data.token);
+      }
+      
       return data.data;
     } catch (error) {
       console.error('Login error:', error);
@@ -49,12 +55,20 @@ export const authAPI = {
 
   getMe: async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         credentials: 'include',
       });
       
       const data = await response.json();
       if (!response.ok) {
+        // If unauthorized, clear the token
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+        }
         throw new Error(data.message || 'Failed to get user data');
       }
       
@@ -67,8 +81,12 @@ export const authAPI = {
 
   logout: async () => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/auth/logout`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         credentials: 'include',
       });
       
@@ -76,6 +94,9 @@ export const authAPI = {
       if (!response.ok) {
         throw new Error(data.message || 'Logout failed');
       }
+
+      // Clear the token from localStorage
+      localStorage.removeItem('token');
       
       return data;
     } catch (error) {
@@ -89,10 +110,12 @@ export const authAPI = {
 export const contactAPI = {
   submitContact: async (contactData: { name: string; email: string; subject: string; message: string }) => {
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify(contactData),

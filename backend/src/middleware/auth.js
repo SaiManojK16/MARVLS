@@ -5,44 +5,42 @@ const User = require('../models/User');
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Check for token in cookies first
-  if (req.cookies && req.cookies.token) {
+  // Get token from Authorization header or cookie
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    // Get token from header
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.token) {
+    // Get token from cookie
     token = req.cookies.token;
   }
-  // Then check Authorization header
-  else if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
 
+  // Make sure token exists
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route',
+      message: 'Not authorized to access this route'
     });
   }
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'marvls_super_secret_key_2024');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
+    // Get user from the token
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
       return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'User not found'
       });
     }
 
     next();
   } catch (err) {
-    console.error('Token verification error:', err);
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route',
+      message: 'Not authorized to access this route'
     });
   }
 };
