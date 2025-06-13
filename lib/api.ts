@@ -17,7 +17,9 @@ export const authAPI = {
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
       }
-      return data;
+      
+      // Return the user data from the response
+      return data.data;
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -39,7 +41,7 @@ export const authAPI = {
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
-      return data;
+      return data.data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -48,15 +50,7 @@ export const authAPI = {
 
   getMe: async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       const response = await fetch(`${API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
         credentials: 'include',
       });
       
@@ -65,7 +59,7 @@ export const authAPI = {
         throw new Error(data.message || 'Failed to get user data');
       }
       
-      return data;
+      return data.data;
     } catch (error) {
       console.error('Get me error:', error);
       throw error;

@@ -42,6 +42,17 @@ exports.register = async (req, res) => {
     });
 
     if (user) {
+      // Generate token
+      const token = generateToken(user._id);
+
+      // Set cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+
       res.status(201).json({
         success: true,
         data: {
@@ -50,7 +61,7 @@ exports.register = async (req, res) => {
           email: user.email,
           userType: user.userType,
           role: user.role,
-          token: generateToken(user._id),
+          token
         },
       });
     }
@@ -105,7 +116,7 @@ exports.login = async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
 
@@ -152,6 +163,29 @@ exports.getMe = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error getting user data',
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  try {
+    res.cookie('token', '', {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error logging out',
     });
   }
 }; 

@@ -44,11 +44,8 @@ export default function SignupPage() {
         userType: formData.userType
       })
 
-      if (response.success) {
-        router.push("/login")
-      } else {
-        setError(response.message || "Registration failed")
-      }
+      // If we get here, registration was successful
+      router.push("/login")
     } catch (error) {
       setError(error instanceof Error ? error.message : "Registration failed")
     } finally {

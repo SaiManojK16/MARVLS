@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Menu } from "lucide-react"
+import { Menu, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { authAPI } from "@/lib/api"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,10 +23,39 @@ export default function Navbar() {
         setScrolled(false)
       }
     }
-
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const userData = await authAPI.getMe()
+        console.log('User data received:', userData)
+        setUser(userData)
+      } catch (error) {
+        console.error('Auth check error:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:5001/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      setUser(null);
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
 
   return (
     <header
@@ -61,12 +94,34 @@ export default function Navbar() {
           </Link>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <Button variant="outline" className="hover:border-primary hover:text-primary transition-colors" asChild>
-              <Link href="/login">Log In</Link>
-            </Button>
-            <Button className="animate-pulse-subtle" asChild>
-              <Link href="/signup">Sign Up</Link>
-            </Button>
+            {loading ? null : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    {user.name || user.email || "Profile"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" className="hover:border-primary hover:text-primary transition-colors" asChild>
+                  <Link href="/login">Log In</Link>
+                </Button>
+                <Button className="animate-pulse-subtle" asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
 
@@ -79,7 +134,7 @@ export default function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <div className="flex flex-col gap-6 pt-6">
                 <Link
                   href="/"
@@ -109,16 +164,32 @@ export default function Navbar() {
                 >
                   Contact
                 </Link>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href="/login" onClick={() => setIsOpen(false)}>
-                    Log In
-                  </Link>
-                </Button>
-                <Button asChild className="w-full">
-                  <Link href="/signup" onClick={() => setIsOpen(false)}>
-                    Sign Up
-                  </Link>
-                </Button>
+                {loading ? null : user ? (
+                  <>
+                    <Button variant="outline" className="w-full flex items-center gap-2" asChild>
+                      <Link href="/profile" onClick={() => setIsOpen(false)}>
+                        <User className="h-4 w-4" />
+                        {user.name || user.email || "Profile"}
+                      </Link>
+                    </Button>
+                    <Button variant="destructive" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" asChild className="w-full">
+                      <Link href="/login" onClick={() => setIsOpen(false)}>
+                        Log In
+                      </Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link href="/signup" onClick={() => setIsOpen(false)}>
+                        Sign Up
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

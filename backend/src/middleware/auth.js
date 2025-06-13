@@ -5,7 +5,12 @@ const User = require('../models/User');
 exports.protect = async (req, res, next) => {
   let token;
 
-  if (
+  // Check for token in cookies first
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+  // Then check Authorization header
+  else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
@@ -21,12 +26,20 @@ exports.protect = async (req, res, next) => {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'marvls_super_secret_key_2024');
 
     req.user = await User.findById(decoded.id);
 
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
     next();
   } catch (err) {
+    console.error('Token verification error:', err);
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',

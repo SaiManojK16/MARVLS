@@ -29,20 +29,21 @@ export default function LoginPage() {
     setError("")
 
     try {
+      console.log('Attempting login...')
       const response = await authAPI.login({
         email: formData.email,
         password: formData.password
       })
+      console.log('Login response:', response)
 
-      if (response.success) {
-        // Store the token in localStorage
-        localStorage.setItem('token', response.data.token)
-        // Redirect to home page
-        router.push("/")
-      } else {
-        setError(response.message || "Login failed")
-      }
+      // Store the token in localStorage
+      localStorage.setItem('token', response.token)
+      console.log('Token stored:', response.token)
+
+      // Force a page reload to update the Navbar
+      window.location.href = "/"
     } catch (error) {
+      console.error('Login error:', error)
       setError(error instanceof Error ? error.message : "Login failed")
     } finally {
       setIsLoading(false)
