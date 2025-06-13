@@ -3,33 +3,36 @@ const mongoose = require('mongoose');
 const contactSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please provide your name'],
+    required: [true, 'Please provide a name'],
+    trim: true,
   },
   email: {
     type: String,
-    required: [true, 'Please provide your email'],
-    match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email',
-    ],
+    required: [true, 'Please provide an email'],
+    trim: true,
+    lowercase: true,
   },
-  subject: {
+  organization: {
     type: String,
-    required: [true, 'Please provide a subject'],
+    trim: true,
+  },
+  inquiryType: {
+    type: String,
+    required: [true, 'Please provide an inquiry type'],
+    enum: ['demo', 'quote', 'general'],
   },
   message: {
     type: String,
     required: [true, 'Please provide a message'],
+    trim: true,
   },
   status: {
     type: String,
-    enum: ['pending', 'read', 'replied'],
-    default: 'pending',
+    enum: ['new', 'in-progress', 'completed'],
+    default: 'new',
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+}, {
+  timestamps: true,
 });
 
 module.exports = mongoose.model('Contact', contactSchema); 

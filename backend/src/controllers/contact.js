@@ -1,15 +1,15 @@
 const Contact = require('../models/Contact');
-const sendEmail = require('../utils/sendEmail');
+const sendEmail = require('../utils/email');
 
 // @desc    Submit contact form
 // @route   POST /api/contact
 // @access  Public
 exports.submitContact = async (req, res) => {
   try {
-    console.log('Contact form submission received:', req.body);
-    const { name, email, subject, message } = req.body;
+    const { name, email, organization, inquiryType, message } = req.body;
 
-    if (!name || !email || !subject || !message) {
+    // Validate required fields
+    if (!name || !email || !inquiryType || !message) {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required fields',
@@ -20,32 +20,32 @@ exports.submitContact = async (req, res) => {
     const contact = await Contact.create({
       name,
       email,
-      subject,
+      organization,
+      inquiryType,
       message,
     });
 
     // Send email notification
-    try {
-      const emailOptions = {
-        email: process.env.EMAIL_TO || 'kartalasaimanoj@gmail.com',
-        subject: `New Contact Form Submission: ${subject}`,
-        message: `
-          Name: ${name}
-          Email: ${email}
-          Subject: ${subject}
-          Message: ${message}
-        `,
-      };
+    const emailHtml = `
+      <h2>New Contact Form Submission</h2>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Organization:</strong> ${organization || 'Not provided'}</p>
+      <p><strong>Inquiry Type:</strong> ${inquiryType}</p>
+      <p><strong>Message:</strong></p>
+      <p>${message}</p>
+    `;
 
-      await sendEmail(emailOptions);
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      // Don't fail the request if email fails
-    }
+    await sendEmail({
+      to: process.env.EMAIL_TO || 'kartalasaimanoj@gmail.com',
+      subject: `New Contact Form Submission: ${inquiryType}`,
+      html: emailHtml
+    });
 
     res.status(201).json({
       success: true,
       data: contact,
+      message: 'Contact form submitted successfully',
     });
   } catch (error) {
     console.error('Contact submission error:', error);
