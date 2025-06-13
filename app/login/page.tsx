@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authAPI } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
@@ -29,19 +30,8 @@ export default function LoginPage() {
     setError("")
 
     try {
-      console.log('Attempting login...')
-      const response = await authAPI.login({
-        email: formData.email,
-        password: formData.password
-      })
-      console.log('Login response:', response)
-
-      // Store the token in localStorage
-      localStorage.setItem('token', response.token)
-      console.log('Token stored:', response.token)
-
-      // Force a page reload to update the Navbar
-      window.location.href = "/"
+      await login(formData.email, formData.password)
+      router.push("/")
     } catch (error) {
       console.error('Login error:', error)
       setError(error instanceof Error ? error.message : "Login failed")

@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-import { authAPI } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, loading, logout } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,27 +26,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const userData = await authAPI.getMe()
-        console.log('User data received:', userData)
-        setUser(userData)
-      } catch (error) {
-        console.error('Auth check error:', error)
-        setUser(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [])
-
   const handleLogout = async () => {
     try {
-      await authAPI.logout()
-      setUser(null)
+      await logout()
       window.location.href = '/login'
     } catch (error) {
       console.error('Logout error:', error)

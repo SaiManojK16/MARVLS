@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { authAPI } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { register } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
@@ -37,14 +38,12 @@ export default function SignupPage() {
     setError("")
 
     try {
-      const response = await authAPI.register({
+      await register({
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         password: formData.password,
         userType: formData.userType
       })
-
-      // If we get here, registration was successful
       router.push("/login")
     } catch (error) {
       setError(error instanceof Error ? error.message : "Registration failed")
