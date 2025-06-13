@@ -6,11 +6,13 @@ import { OrbitControls, useGLTF, Environment, Text, Float, Html } from "@react-t
 import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { CuboidIcon as Cube, AtomIcon, BrainIcon, DnaIcon } from "lucide-react"
-import { Mesh } from "three"
+import { Mesh, Group, Object3D, Vector3 } from "three"
 
-function Model({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }) {
+type Position = [number, number, number]
+
+function Model({ position = [0, 0, 0] as Position, scale = 1, rotation = [0, 0, 0] as Position }) {
   const { scene } = useGLTF("/assets/3d/duck.glb")
-  const ref = useRef()
+  const ref = useRef<Object3D>(null)
 
   useFrame((state) => {
     if (ref.current) {
@@ -21,11 +23,11 @@ function Model({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }) {
   return <primitive ref={ref} object={scene} position={position} scale={scale} rotation={rotation} />
 }
 
-function AtomModel({ position = [0, 0, 0], color = "#7c3aed" }) {
-  const group = useRef()
-  const electron1 = useRef()
-  const electron2 = useRef()
-  const electron3 = useRef()
+function AtomModel({ position = [0, 0, 0] as Position, color = "#7c3aed" }) {
+  const group = useRef<Group>(null)
+  const electron1 = useRef<Mesh>(null)
+  const electron2 = useRef<Mesh>(null)
+  const electron3 = useRef<Mesh>(null)
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime()
@@ -93,8 +95,8 @@ function AtomModel({ position = [0, 0, 0], color = "#7c3aed" }) {
   )
 }
 
-function DnaModel({ position = [0, 0, 0], color1 = "#7c3aed", color2 = "#10b981" }) {
-  const group = useRef()
+function DnaModel({ position = [0, 0, 0] as Position, color1 = "#7c3aed", color2 = "#10b981" }) {
+  const group = useRef<Group>(null)
 
   useFrame((state) => {
     if (group.current) {
@@ -178,17 +180,24 @@ function DnaModel({ position = [0, 0, 0], color1 = "#7c3aed", color2 = "#10b981"
   )
 }
 
-function BrainModel({ position = [0, 0, 0], color = "#7c3aed" }) {
-  const group = useRef()
-  const connections = useRef([])
+function BrainModel({ position = [0, 0, 0] as Position, color = "#7c3aed" }) {
+  const group = useRef<Group>(null)
+  const connections = useRef<Array<{
+    start: Position
+    end: Position
+    speed: number
+    offset: number
+    thickness: number
+    color: string
+  }>>([])
 
   // Generate random connections
   useEffect(() => {
     const newConnections = []
     for (let i = 0; i < 50; i++) {
       newConnections.push({
-        start: [(Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3],
-        end: [(Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3],
+        start: [(Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3] as Position,
+        end: [(Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3] as Position,
         speed: Math.random() * 0.02 + 0.01,
         offset: Math.random() * Math.PI * 2,
         thickness: Math.random() * 0.03 + 0.01,
@@ -199,33 +208,55 @@ function BrainModel({ position = [0, 0, 0], color = "#7c3aed" }) {
   }, [])
 
   useFrame((state) => {
-    const t = state.clock.getElapsedTime()
-
     if (group.current) {
-      group.current.rotation.y += 0.003
+      group.current.rotation.y += 0.001
     }
   })
 
   return (
     <group ref={group} position={position}>
-      {/* Brain hemisphere 1 */}
-      <mesh position={[-0.6, 0, 0]}>
-        <sphereGeometry args={[1.5, 32, 32, 0, Math.PI]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-
-      {/* Brain hemisphere 2 */}
-      <mesh position={[0.6, 0, 0]} rotation={[0, Math.PI, 0]}>
-        <sphereGeometry args={[1.5, 32, 32, 0, Math.PI]} />
+      {/* Brain core */}
+      <mesh>
+        <sphereGeometry args={[1.5, 32, 32]} />
         <meshStandardMaterial color={color} />
       </mesh>
 
       {/* Neural connections */}
       {connections.current.map((connection, i) => (
         <mesh key={i}>
-          <sphereGeometry args={[connection.thickness * 2, 8, 8]} />
-          <meshStandardMaterial color={connection.color} emissive={connection.color} emissiveIntensity={0.5} />
-          <group position={connection.start} />
+          <cylinderGeometry
+            args={[
+              connection.thickness,
+              connection.thickness,
+              Math.sqrt(
+                Math.pow(connection.end[0] - connection.start[0], 2) +
+                  Math.pow(connection.end[1] - connection.start[1], 2) +
+                  Math.pow(connection.end[2] - connection.start[2], 2)
+              ),
+              8,
+            ]}
+          />
+          <meshStandardMaterial color={connection.color} />
+          <group
+            position={[
+              (connection.start[0] + connection.end[0]) / 2,
+              (connection.start[1] + connection.end[1]) / 2,
+              (connection.start[2] + connection.end[2]) / 2,
+            ]}
+            rotation={[
+              Math.atan2(
+                Math.sqrt(
+                  Math.pow(connection.end[0] - connection.start[0], 2) +
+                    Math.pow(connection.end[2] - connection.start[2], 2)
+                ),
+                connection.end[1] - connection.start[1]
+              ),
+              0,
+              Math.atan2(connection.end[2] - connection.start[2], connection.end[0] - connection.start[0]),
+            ]}
+          >
+            <primitive object={new Mesh()} />
+          </group>
         </mesh>
       ))}
     </group>
@@ -233,93 +264,60 @@ function BrainModel({ position = [0, 0, 0], color = "#7c3aed" }) {
 }
 
 function Scene() {
-  const [modelType, setModelType] = useState("atom")
-  const { camera } = useThree()
-
-  useEffect(() => {
-    camera.position.set(0, 0, 8)
-  }, [camera])
+  const [activeModel, setActiveModel] = useState("atom")
 
   return (
     <>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
-      <Environment preset="city" />
+      <OrbitControls enableZoom={true} enablePan={true} enableRotate={true} />
 
-      <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-        {modelType === "atom" && <AtomModel position={[0, 0, 0]} />}
-        {modelType === "dna" && <DnaModel position={[0, 0, 0]} />}
-        {modelType === "brain" && <BrainModel position={[0, 0, 0]} />}
-        {modelType === "duck" && <Model position={[0, -1, 0]} scale={2} />}
-      </Float>
+      {activeModel === "atom" && <AtomModel position={[0, 0, 0]} />}
+      {activeModel === "dna" && <DnaModel position={[0, 0, 0]} />}
+      {activeModel === "brain" && <BrainModel position={[0, 0, 0]} />}
 
-      <Text
-        position={[0, 3, 0]}
-        fontSize={0.5}
-        color="#ffffff"
-        anchorX="center"
-        anchorY="middle"
-        font="/fonts/Inter_Bold.json"
-      >
-        MARVLS 3D VISUALIZATION
-      </Text>
-
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        minPolarAngle={Math.PI / 3}
-        maxPolarAngle={Math.PI / 1.5}
-        rotateSpeed={0.5}
-      />
-
-      <group position={[0, -3, 0]}>
-        <Html center>
-          <div className="flex gap-2 bg-black/30 p-2 rounded-lg backdrop-blur-sm">
-            <Button
-              size="sm"
-              variant={modelType === "atom" ? "default" : "outline"}
-              className="bg-primary/80 hover:bg-primary text-white"
-              onClick={() => setModelType("atom")}
-            >
-              <AtomIcon className="h-4 w-4 mr-1" /> Atom
-            </Button>
-            <Button
-              size="sm"
-              variant={modelType === "dna" ? "default" : "outline"}
-              className="bg-primary/80 hover:bg-primary text-white"
-              onClick={() => setModelType("dna")}
-            >
-              <DnaIcon className="h-4 w-4 mr-1" /> DNA
-            </Button>
-            <Button
-              size="sm"
-              variant={modelType === "brain" ? "default" : "outline"}
-              className="bg-primary/80 hover:bg-primary text-white"
-              onClick={() => setModelType("brain")}
-            >
-              <BrainIcon className="h-4 w-4 mr-1" /> Brain
-            </Button>
-            <Button
-              size="sm"
-              variant={modelType === "duck" ? "default" : "outline"}
-              className="bg-primary/80 hover:bg-primary text-white"
-              onClick={() => setModelType("duck")}
-            >
-              <Cube className="h-4 w-4 mr-1" /> Duck
-            </Button>
-          </div>
-        </Html>
-      </group>
+      <Html position={[0, -2, 0]} center>
+        <div className="flex gap-2">
+          <Button
+            variant={activeModel === "atom" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveModel("atom")}
+            className="flex items-center gap-2"
+          >
+            <AtomIcon className="h-4 w-4" />
+            Atom
+          </Button>
+          <Button
+            variant={activeModel === "dna" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveModel("dna")}
+            className="flex items-center gap-2"
+          >
+            <DnaIcon className="h-4 w-4" />
+            DNA
+          </Button>
+          <Button
+            variant={activeModel === "brain" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveModel("brain")}
+            className="flex items-center gap-2"
+          >
+            <BrainIcon className="h-4 w-4" />
+            Brain
+          </Button>
+        </div>
+      </Html>
     </>
   )
 }
 
 export default function ARModelViewer() {
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden">
-      <Canvas shadows>
+    <div className="w-full h-full">
+      <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
         <Suspense fallback={null}>
           <Scene />
+          <Environment preset="city" />
         </Suspense>
       </Canvas>
     </div>
